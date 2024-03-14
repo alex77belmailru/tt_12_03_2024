@@ -75,8 +75,16 @@ class ReferralModelViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):  # создание кода
         if request.user.is_anonymous:
             raise serializers.ValidationError('Для создания реферального кода необходимо авторизоваться.')
-        if request.data.get('is_active'):  # проверка введенного срока годности
+        self.check_expiration(request)
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self.check_expiration(request)
+        return super().update(request, *args, **kwargs)
+
+    @staticmethod
+    def check_expiration(request):  # проверка возможности установки статуса активности кода
+        if request.data.get('is_active'):
             if not request.data['expiration'] or datetime.strptime(request.data['expiration'],
                                                                    "%Y-%m-%dT%H:%M") < datetime.now():
-                raise serializers.ValidationError('Срок годности кода истек, не может быть активным.')
-        return super().create(request, *args, **kwargs)
+                raise serializers.ValidationError('Срок годности кода истек, код не может быть активным.')
