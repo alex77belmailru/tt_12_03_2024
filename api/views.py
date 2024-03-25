@@ -2,6 +2,8 @@ from rest_framework import viewsets
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from api.permissions import *
 from api.serializers import *
@@ -60,6 +62,7 @@ class ReferralModelViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):  # получение текущего авторизованного пользователя
         serializer.save(owner=self.request.user)
 
+    @method_decorator(cache_page(60 * 60 * 2))  # кэширование страницы
     def list(self, request, *args, **kwargs):  # получение списка кодов
         if request.user.is_anonymous:  # для просмотра списка нужна авторизация
             return Response(data=None)
