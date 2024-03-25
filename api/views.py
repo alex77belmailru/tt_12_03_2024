@@ -8,6 +8,8 @@ from django.views.decorators.cache import cache_page
 from api.permissions import *
 from api.serializers import *
 
+CACHE_TIMEOUT = 60  # время жизни кеша в сек
+
 
 class UserModelViewSet(viewsets.ModelViewSet):
     """Класс для работы с моделью 'Пользователь'"""
@@ -62,7 +64,11 @@ class ReferralModelViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):  # получение текущего авторизованного пользователя
         serializer.save(owner=self.request.user)
 
-    @method_decorator(cache_page(60 * 60 * 2))  # кэширование страницы
+    @method_decorator(cache_page(CACHE_TIMEOUT))  # кэширование
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @method_decorator(cache_page(CACHE_TIMEOUT))  # кэширование
     def list(self, request, *args, **kwargs):  # получение списка кодов
         if request.user.is_anonymous:  # для просмотра списка нужна авторизация
             return Response(data=None)
